@@ -1,0 +1,16 @@
+# secrets
+*.pem
+*.key
+.env
+*.tfvars
+credentials
+
+# build
+*.war
+target/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

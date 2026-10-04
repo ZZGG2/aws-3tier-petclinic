@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Tomcat 9 conf/context.xml — Redisson으로 세션을 ElastiCache Redis에 저장 (애플리케이션 코드 무수정) -->
+<Context>
+    <WatchedResource>WEB-INF/web.xml</WatchedResource>
+    <WatchedResource>WEB-INF/tomcat-web.xml</WatchedResource>
+    <WatchedResource>${catalina.base}/conf/web.xml</WatchedResource>
+
+    <Manager className="org.redisson.tomcat.RedissonSessionManager"
+             configPath="${catalina.base}/conf/redisson.yaml"
+             readMode="REDIS"
+             updateMode="DEFAULT"
+             keyPrefix="pc:" />
+</Context>
