@@ -1,7 +1,4 @@
 # 01. 네트워크
-
-> `<...>` 로 표시된 값과 CIDR은 예시입니다. 실제 구축 값으로 교체하세요.
-
 ## VPC & 서브넷
 
 - 리전: `ap-northeast-2` (서울), AZ: `2a`, `2c`
@@ -14,6 +11,7 @@
 | Web | `pc-sub-web-a` 10.0.11.0/24 | `pc-sub-web-c` 10.0.12.0/24 | local + VPC Endpoint |
 | WAS | `pc-sub-was-a` 10.0.21.0/24 | `pc-sub-was-c` 10.0.22.0/24 | local + VPC Endpoint |
 | DB | `pc-sub-db-a` 10.0.31.0/24 | `pc-sub-db-c` 10.0.32.0/24 | local |
+| Valkey | `pc-sub-valkey-a` 10.0.41.0/24 | `pc-sub-valkey-c` 10.0.42.0/24 | local |
 
 ## 보안그룹 체인
 
@@ -32,7 +30,7 @@ Internet ──80/443──▶ pc-sg-alb ──80──▶ pc-sg-web ──8080�
 | `pc-sg-nlb` | TCP 8080 from `pc-sg-web` | 내부 NLB (생성 시 SG 연결) |
 | `pc-sg-was` | 8080 from `pc-sg-nlb` | Tomcat |
 | `pc-sg-db` | 3306 from `pc-sg-was` | RDS |
-| `pc-sg-redis` | 6379 from `pc-sg-was` | ElastiCache |
+| `pc-sg-valkey` | 6379 from `pc-sg-was` | ElastiCache |
 | `pc-sg-vpce` | 443 from VPC CIDR | Interface Endpoint |
 
 > NLB는 생성 시점에만 SG를 붙일 수 있어 처음부터 `pc-sg-nlb`를 지정했습니다. WAS SG를 NLB SG 참조로 묶을 수 있는 이유이기도 합니다.
@@ -49,5 +47,3 @@ Internet ──80/443──▶ pc-sg-alb ──80──▶ pc-sg-web ──8080�
 | `...logs` | Interface | CloudWatch Logs (Agent) |
 | `...monitoring` | Interface | CloudWatch 메트릭 (Agent) |
 | `...s3` | Gateway | S3 (로그 적재 등) |
-
-<!-- TODO: 실제 생성한 Endpoint 목록과 다르면 수정 -->

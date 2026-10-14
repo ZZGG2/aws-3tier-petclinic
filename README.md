@@ -22,37 +22,9 @@
 
 ## 아키텍처
 
-```mermaid
-flowchart LR
-    U([User]) -->|HTTPS| R53[Route 53]
-    R53 --> ALB
-
-    subgraph VPC["pc-vpc (2 AZ)"]
-        subgraph PUB["Public Subnet"]
-            ALB[ALB<br/>internet-facing<br/>ACM TLS 종료]
-        end
-        subgraph WEB["Private Subnet - Web"]
-            W1[Apache<br/>ASG]
-        end
-        subgraph WAS["Private Subnet - WAS"]
-            NLB[NLB<br/>internal :8080]
-            T1[Tomcat 9 / Java 17<br/>ASG]
-            REDIS[(ElastiCache<br/>Redis)]
-        end
-        subgraph DB["Private Subnet - DB"]
-            RDS[(RDS MySQL 8.0<br/>Multi-AZ)]
-        end
-        VPCE[VPC Endpoints<br/>SSM · Logs · S3 ...]
-    end
-
-    ALB -->|HTTP| W1
-    W1 -->|mod_proxy :8080| NLB --> T1
-    T1 --> RDS
-    T1 <-->|Session| REDIS
-    W1 & T1 -.-> VPCE
-    VPCE -.-> SSM[SSM Parameter Store<br/>Session Manager]
-    VPCE -.-> CW[CloudWatch Logs] --> S3[(S3 Log Bucket)]
-```
+<p align="center">
+  <img src="docs/images/architecture.png" alt="Architecture" width="900">
+</p>
 
 ## 핵심 설계 결정
 
@@ -103,17 +75,32 @@ flowchart LR
 
 ## 기술 스택
 
-`AWS VPC` `EC2` `Auto Scaling` `ALB` `NLB` `RDS (MySQL 8.0)` `ElastiCache (Redis)` `Route 53` `ACM` `SSM` `CloudWatch` `CloudTrail` `S3` `Apache HTTP Server` `Tomcat 9` `Java 17` `k6`
+`AWS VPC` `EC2` `Auto Scaling` `ALB` `NLB` `RDS (MySQL 8.0)` `ElastiCache (Valkey)` `Route 53` `ACM` `SSM` `CloudWatch` `CloudTrail` `S3` `Apache2` `Tomcat 9` `Java 17` `k6`
 
 ## 팀
 
 | 이름 | 역할 | GitHub |
 |---|---|---|
-| 대석 | <!-- TODO: 담당 역할 --> | <!-- TODO --> |
-| <!-- TODO --> | | |
-| <!-- TODO --> | | |
-| <!-- TODO --> | | |
+| 배대석 | WEB, WAS 등 전반 인프라 구성 | https://github.com/ZZGG2/ |
+| 송준욱 | 네트워크, 보안 구성 | https://github.com/msugr/ |
+| 김은지 | RDS, Redis 등 데이터베이스 구성 | https://github.com/didhddl49/ |
+| 이요섭 | CloudWatch 모니터링 구성 | https://github.com/bbben2/ |
 
 ## 회고
 
-<!-- TODO: 배운 점, 아쉬운 점 3~5줄. 예) v1/v2 병행 중 수동 변경으로 설정 드리프트를 겪고 전체 재구축 → IaC(Terraform) 필요성 체감 -->
+## 회고
+
+### 잘한 점
+- **ALB 502 에러 해결** — 부하 테스트 중 반복된 ALB 502를 Apache 설정 튜닝으로 약 8만 건 요청당 0~1건 수준까지 낮췄습니다. 지표와 로그로 원인을 좁혀 가는 과정을 경험했습니다. ([트러블슈팅](docs/troubleshooting.md))
+- **설정과 이미지 분리** — 엔드포인트와 비밀번호를 SSM Parameter Store로 옮겨, 같은 골든 AMI를 어느 환경에서나 다시 쓸 수 있게 했습니다.
+- **근거 있는 사이징** — "크게 띄웠다가 줄이기"를 하지 않기로 하고, 서비스 시나리오(평시 50~100명)와 k6 결과로 RDS 클래스를 정했습니다.
+
+### 아쉬운 점
+- **콘솔 수동 구축의 한계** — v1/v2를 함께 운영하면서 LB를 다시 만들었을 때 파라미터가 따라오지 않는 설정 드리프트가 생겼고, 결국 전체를 다시 구축했습니다. 어떤 변경이 있었는지 추적할 수 없다는 점이 가장 큰 비용이었습니다.
+- **재현성 부족** — 대부분 콘솔에서 작업해 스크립트와 설정이 거의 남지 않았고, 이 레포를 정리하면서 구성을 다시 만들어야 했습니다.
+
+### 다음에 적용할 것
+- **IaC(Terraform)로 처음부터 구성** — 변경 이력을 남기고, 재구축을 명령 한 번으로 끝낼 수 있게
+- **CI/CD로 WAR 빌드와 AMI 생성 자동화** (GitHub Actions + Packer)
+- **멀티 클라우드로 재해 복구** — AWS 외부에서도 재해 복구할 수 있는 시나리오
+- **MSA 기반 아키텍처** - Docker, k8s 도입으로 아키텍처 세분화

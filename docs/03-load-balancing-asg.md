@@ -10,7 +10,7 @@
 | 헬스체크 | HTTP `/` | TCP 8080 <!-- TODO: HTTP 헬스체크로 했다면 경로 기입 --> |
 | SG | `pc-sg-alb` | `pc-sg-nlb` |
 
-> 초기에는 "외부 NLB / 내부 ALB"를 가정했으나, TLS 종료·L7 라우팅이 필요한 쪽은 사용자 앞단이므로 **외부 ALB / 내부 NLB**로 확정했습니다.
+> 초기에는 "외부 ALB / 내부 ALB"를 가정했으나, 내부에서는 TLS 종료·L7 라우팅이 필요하지 않다고 판단하여 **외부 ALB / 내부 NLB**로 확정했습니다.
 
 ## Launch Template
 
@@ -24,8 +24,8 @@
 | | Web | WAS |
 |---|---|---|
 | 서브넷 | `pc-sub-web-a/c` | `pc-sub-was-a/c` |
-| Min / Desired / Max | 2 / 2 / 4 <!-- TODO --> | 2 / 2 / 4 <!-- TODO --> |
-| 스케일링 정책 | Target Tracking — CPU 50% <!-- TODO --> | Target Tracking — CPU 50% <!-- TODO --> |
+| Min / Desired / Max | 2 / 2 / 4 | 2 / 2 / 4 |
+| 스케일링 정책 | Target Tracking — Request Count 20000 | Target Tracking — CPU 60% |
 | 헬스체크 | ELB | ELB |
 
 Web / WAS ASG는 팀원 2명이 계층별로 나눠 병렬로 구축했습니다.
